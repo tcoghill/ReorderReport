@@ -11,25 +11,55 @@
       text-align: center;
       padding: 50px;
     }
+
     .box {
       background: #1e293b;
       padding: 30px;
       border-radius: 10px;
-      max-width: 500px;
+      max-width: 700px;
       margin: auto;
     }
+
     input, button {
       margin-top: 15px;
       padding: 10px;
       width: 100%;
       border-radius: 5px;
       border: none;
+      box-sizing: border-box;
     }
+
     button {
       background: #22c55e;
       color: black;
       font-weight: bold;
       cursor: pointer;
+    }
+
+    .secondary-btn {
+      background: #334155;
+      color: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      color: white;
+    }
+
+    th, td {
+      border: 1px solid #475569;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #0f172a;
+    }
+
+    #status {
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -40,77 +70,88 @@
     <p>Upload your stock file. Get a reorder plan in seconds.</p>
 
     <input type="file" id="fileInput" accept=".csv">
-    <button onclick="downloadTemplate()" style="background:#334155;color:white;">Download Template CSV</button>
-    <button onclick="handleUpload()">Generate Report</button>
+    <button type="button" class="secondary-btn" onclick="downloadTemplate()">Download Template CSV</button>
+    <button type="button" onclick="handleUpload()">Generate Report</button>
 
-    <p id="status"></p>
+    <div id="status"></div>
   </div>
 
   <script>
-    <script>
-function downloadTemplate() {
-  const csvContent = `SKU,Stock,MonthlyDemand,LeadTime
-A,100,300,10
-B,50,200,15`;
+    function downloadTemplate() {
+      const csvContent = "SKU,Stock,MonthlyDemand,LeadTime\nA,100,300,10\nB,50,200,15";
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
 
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "reorderreport-template.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "reorderreport-template.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
+      window.URL.revokeObjectURL(url);
 
-function handleUpload() {
-   function handleUpload() {
-  const file = document.getElementById("fileInput").files[0];
-  if (!file) {
-    document.getElementById("status").innerText = "Please upload a CSV file.";
-    return;
-  }
+      document.getElementById("status").innerHTML = "<p>Template downloaded.</p>";
+    }
 
-  const reader = new FileReader();
+    function handleUpload() {
+      const file = document.getElementById("fileInput").files[0];
 
-  reader.onload = function(event) {
-    const text = event.target.result;
-    const rows = text.split("\n").map(r => r.split(","));
+      if (!file) {
+        document.getElementById("status").innerHTML = "<p>Please upload a CSV file.</p>";
+        return;
+      }
 
-    const headers = rows[0];
-    const data = rows.slice(1);
+      const reader = new FileReader();
 
-    let output = "<h3>Results</h3><table border='1' style='width:100%; color:white'><tr>";
+      reader.onload = function(event) {
+        const text = event.target.result.trim();
+        const rows = text.split("\n").map(r => r.split(","));
 
-    headers.forEach(h => output += `<th>${h}</th>`);
-    output += "<th>Days Cover</th><th>Reorder Qty</th></tr>";
+        if (rows.length < 2) {
+          document.getElementById("status").innerHTML = "<p>The CSV looks empty.</p>";
+          return;
+        }
 
-    data.forEach(row => {
-      if (row.length < 4) return;
+        const headers = rows[0];
+        const data = rows.slice(1);
 
-      const stock = parseFloat(row[1]);
-      const monthly = parseFloat(row[2]);
-      const lead = parseFloat(row[3]);
+        let output = "<h3>Results</h3><table><tr>";
 
-      if (isNaN(stock) || isNaN(monthly) || isNaN(lead)) return;
+        headers.forEach(h => {
+          output += `<th>${h.trim()}</th>`;
+        });
 
-      const daily = monthly / 30;
-      const daysCover = stock / daily;
-      const reorderPoint = daily * lead;
-      const reorderQty = Math.max(0, reorderPoint - stock);
+        output += "<th>Days Cover</th><th>Reorder Qty</th></tr>";
 
-      output += "<tr>";
-      row.forEach(cell => output += `<td>${cell}</td>`);
-      output += `<td>${daysCover.toFixed(1)}</td><td>${Math.ceil(reorderQty)}</td></tr>`;
-    });
+        data.forEach(row => {
+          if (row.length < 4) return;
 
-    output += "</table>";
+          const stock = parseFloat(row[1]);
+          const monthly = parseFloat(row[2]);
+          const lead = parseFloat(row[3]);
 
-    document.getElementById("status").innerHTML = output;
-  };
+          if (isNaN(stock) || isNaN(monthly) || isNaN(lead) || monthly <= 0) return;
 
-  reader.readAsText(file);
+          const daily = monthly / 30;
+          const daysCover = stock / daily;
+          const reorderPoint = daily * lead;
+          const reorderQty = Math.max(0, reorderPoint - stock);
+
+          output += "<tr>";
+          row.forEach(cell => {
+            output += `<td>${cell.trim()}</td>`;
+          });
+          output += `<td>${daysCover.toFixed(1)}</td><td>${Math.ceil(reorderQty)}</td></tr>`;
+        });
+
+        output += "</table>";
+
+        document.getElementById("status").innerHTML = output;
+      };
+
+      reader.readAsText(file);
+    }
   </script>
 
 </body>
