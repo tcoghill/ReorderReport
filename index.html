@@ -122,7 +122,7 @@
           output += `<th>${h.trim()}</th>`;
         });
 
-        output += "<th>Days Cover</th><th>Reorder Qty</th></tr>";
+        output += "<th>Days Cover</th><th>Reorder Qty</th><th>Status</th></tr>";
 
         data.forEach(row => {
           if (row.length < 4) return;
@@ -138,11 +138,24 @@
           const reorderPoint = daily * lead;
           const reorderQty = Math.max(0, reorderPoint - stock);
 
+let status = "OK";
+if (stock < reorderPoint) {
+  status = "URGENT";
+} else if (daysCover < lead * 1.5) {
+  status = "LOW";
+}
+
           output += "<tr>";
           row.forEach(cell => {
             output += `<td>${cell.trim()}</td>`;
           });
-          output += `<td>${daysCover.toFixed(1)}</td><td>${Math.ceil(reorderQty)}</td></tr>`;
+          let color = "white";
+if (status === "URGENT") color = "#ef4444";
+if (status === "LOW") color = "#f59e0b";
+
+output += `<td>${daysCover.toFixed(1)}</td>
+<td>${Math.ceil(reorderQty)}</td>
+<td style="color:${color}; font-weight:bold;">${status}</td></tr>`;
         });
 
         output += "</table>";
