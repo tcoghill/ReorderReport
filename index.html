@@ -46,15 +46,52 @@
   </div>
 
   <script>
-    function handleUpload() {
-      const file = document.getElementById("fileInput").files[0];
-      if (!file) {
-        document.getElementById("status").innerText = "Please upload a CSV file.";
-        return;
-      }
+   function handleUpload() {
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) {
+    document.getElementById("status").innerText = "Please upload a CSV file.";
+    return;
+  }
 
-      document.getElementById("status").innerText = "Processing... (next step coming)";
-    }
+  const reader = new FileReader();
+
+  reader.onload = function(event) {
+    const text = event.target.result;
+    const rows = text.split("\n").map(r => r.split(","));
+
+    const headers = rows[0];
+    const data = rows.slice(1);
+
+    let output = "<h3>Results</h3><table border='1' style='width:100%; color:white'><tr>";
+
+    headers.forEach(h => output += `<th>${h}</th>`);
+    output += "<th>Days Cover</th><th>Reorder Qty</th></tr>";
+
+    data.forEach(row => {
+      if (row.length < 4) return;
+
+      const stock = parseFloat(row[1]);
+      const monthly = parseFloat(row[2]);
+      const lead = parseFloat(row[3]);
+
+      if (isNaN(stock) || isNaN(monthly) || isNaN(lead)) return;
+
+      const daily = monthly / 30;
+      const daysCover = stock / daily;
+      const reorderPoint = daily * lead;
+      const reorderQty = Math.max(0, reorderPoint - stock);
+
+      output += "<tr>";
+      row.forEach(cell => output += `<td>${cell}</td>`);
+      output += `<td>${daysCover.toFixed(1)}</td><td>${Math.ceil(reorderQty)}</td></tr>`;
+    });
+
+    output += "</table>";
+
+    document.getElementById("status").innerHTML = output;
+  };
+
+  reader.readAsText(file);
   </script>
 
 </body>
