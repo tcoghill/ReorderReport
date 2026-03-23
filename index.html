@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ReorderReport</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      text-align: center;
+      padding: 50px;
+    }
+    .box {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+    }
+    input, button {
+      margin-top: 15px;
+      padding: 10px;
+      width: 100%;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      background: #22c55e;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h1>ReorderReport</h1>
+    <p>Upload your stock file. Get a reorder plan in seconds.</p>
+
+    <input type="file" id="fileInput" accept=".csv">
+    <button onclick="handleUpload()">Generate Report</button>
+
+    <p id="status"></p>
+  </div>
+
+  <script>
+    function handleUpload() {
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) {
+        document.getElementById("status").innerText = "Please upload a CSV file.";
+        return;
+      }
+
+      document.getElementById("status").innerText = "Processing... (next step coming)";
+    }
+  </script>
+
+</body>
+</html>
