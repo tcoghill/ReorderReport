@@ -41,10 +41,16 @@
       color: white;
     }
 
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+
     table {
       width: 100%;
+      min-width: 700px;
       border-collapse: collapse;
-      margin-top: 20px;
       color: white;
     }
 
@@ -116,7 +122,7 @@
         const headers = rows[0];
         const data = rows.slice(1);
 
-        let output = "<h3>Results</h3><table><tr>";
+        let output = "<h3>Results</h3><div class='table-wrap'><table><tr>";
 
         headers.forEach(h => {
           output += `<th>${h.trim()}</th>`;
@@ -138,27 +144,29 @@
           const reorderPoint = daily * lead;
           const reorderQty = Math.max(0, reorderPoint - stock);
 
-let status = "OK";
-if (stock < reorderPoint) {
-  status = "URGENT";
-} else if (daysCover < lead * 1.5) {
-  status = "LOW";
-}
+          let status = "OK";
+          if (stock < reorderPoint) {
+            status = "URGENT";
+          } else if (daysCover < lead * 1.5) {
+            status = "LOW";
+          }
+
+          let color = "white";
+          if (status === "URGENT") color = "#ef4444";
+          if (status === "LOW") color = "#f59e0b";
+          if (status === "OK") color = "#22c55e";
 
           output += "<tr>";
           row.forEach(cell => {
             output += `<td>${cell.trim()}</td>`;
           });
-          let color = "white";
-if (status === "URGENT") color = "#ef4444";
-if (status === "LOW") color = "#f59e0b";
 
-output += `<td>${daysCover.toFixed(1)}</td>
+          output += `<td>${daysCover.toFixed(1)}</td>
 <td>${Math.ceil(reorderQty)}</td>
 <td style="color:${color}; font-weight:bold;">${status}</td></tr>`;
         });
 
-        output += "</table>";
+        output += "</table></div>";
 
         document.getElementById("status").innerHTML = output;
       };
