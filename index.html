@@ -170,6 +170,49 @@ B,Item B,50,15,20,4.20,Supplier B,50,10,150,200,250`;
       return Math.ceil(value / multiple) * multiple;
     }
 
+  function getDynamicMessage(urgent, low, total) {
+  
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  
+    if (urgent === total && total > 0) {
+      return pick([
+        "Right. Let’s not pretend this is fine.",
+        "This is a mess.",
+        "We need to talk. Immediately.",
+        "You’ve achieved full chaos.",
+        "Let’s call this… a rebuild."
+      ]);
+    }
+  
+    if (urgent > 0) {
+      return pick([
+        "Well… this is going to hurt.",
+        "Congratulations, you’re already late.",
+        "This won’t fix itself.",
+        "You’re about to run out. Not ideal.",
+        "Hope you like explaining stockouts."
+      ]);
+    }
+  
+    if (low > 0) {
+      return pick([
+        "You’re playing a dangerous little game here.",
+        "This is fine… until it isn’t.",
+        "You’ve got time. Not loads.",
+        "One delay and this turns ugly.",
+        "Don’t leave this to chance."
+      ]);
+    }
+  
+    return pick([
+      "Look at you, being organised.",
+      "No disasters today. Enjoy it.",
+      "Everything’s under control. Suspicious.",
+      "This is what competence looks like.",
+      "Carry on. Sensibly."
+    ]);
+  }
+    
     function handleUpload() {
       const file = document.getElementById("fileInput").files[0];
 
@@ -347,7 +390,8 @@ B,Item B,50,15,20,4.20,Supplier B,50,10,150,200,250`;
             "<p>No valid data rows were found. Check your column names and numeric values.</p>";
           return;
         }
-
+        const message = getDynamicMessage(urgentCount, lowCount, validRows);
+        
         const summaryHtml = `
           <div class="summary-strip">
             <div class="summary-card">
