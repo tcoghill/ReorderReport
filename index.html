@@ -419,7 +419,10 @@ B,Item B,50,15,20,4.20,Supplier B,50,10,150,200,250`;
               <p>£${totalOrderSpend.toFixed(2)}</p>
             </div>
           </div>
-          <p class="muted">CB1 Engine v1: explainable replenishment logic with forecast, safety stock, and action-ready outputs.</p>
+         <p class="muted" style="font-size:16px; margin-top:10px;">
+        ${message}
+        </p>
+        <p class="muted">CB1 Engine v1: explainable replenishment logic with forecast, safety stock, and action-ready outputs.</p>
         `;
 
         document.getElementById("status").innerHTML = summaryHtml + table;
