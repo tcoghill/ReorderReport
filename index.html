@@ -7,19 +7,32 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
   <div class="box">
     <h1>CB1 Online</h1>
-    <p>Upload stock and usage data. Get a clear, explainable reorder decision.</p>
+    <p>Upload stock and usage data. Then search for an SKU to load the Crystal Ball view.</p>
 
-    <input type="file" id="fileInput" accept=".csv" onchange="handleFileChange()">
-    <input type="text" id="skuSearch" placeholder="Search SKU..." oninput="handleSearch()">
-    <button type="button" class="secondary-btn" onclick="downloadSimpleTemplate()">Download Simple Template</button>
-    <button type="button" class="secondary-btn" onclick="downloadAdvancedTemplate()">Download Advanced Template</button>
-    <button type="button" onclick="handleUpload()">Generate Decision Report</button>
-    <button type="button" class="danger-btn" onclick="resetTool()">Reset</button>
+    <div class="panel">
+      <h2>Stage 1: Upload File</h2>
+      <input type="file" id="fileInput" accept=".csv">
+      <button type="button" class="secondary-btn" onclick="downloadSimpleTemplate()">Download Simple Template</button>
+      <button type="button" class="secondary-btn" onclick="downloadAdvancedTemplate()">Download Advanced Template</button>
+      <button type="button" onclick="handleUpload()">Upload File</button>
+      <button type="button" class="danger-btn" onclick="resetTool()">Reset</button>
+      <div id="uploadStatus" class="muted"></div>
+    </div>
 
-    <div id="status"></div>
+    <div class="two-column">
+      <div class="panel">
+        <h2>Stage 2: Search SKU</h2>
+        <input type="text" id="skuSearch" placeholder="Search SKU..." oninput="handleSearch()" disabled>
+        <div id="resultsPanel" class="muted">Upload a file to begin.</div>
+      </div>
+
+      <div class="panel">
+        <h2>CB1 View</h2>
+        <div id="cb1Panel" class="muted">Select an SKU to load the CB1 view.</div>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>
