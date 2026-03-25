@@ -2,6 +2,9 @@
 // Template Downloads
 // =========================
 
+let uploadedData = [];
+let uploadedHeaders = [];
+
 function downloadSimpleTemplate() {
   const csvContent =
 `SKU,Description,CurrentStock,MonthlyDemand,LeadTimeDays
@@ -129,6 +132,9 @@ function handleUpload() {
       document.getElementById("status").innerHTML = "<p>The CSV looks empty.</p>";
       return;
     }
+
+    const headers = rows[0];
+    const data = rows.slice(1);
 
     const headers = rows[0];
     const data = rows.slice(1);
