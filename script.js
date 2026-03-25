@@ -50,9 +50,57 @@ function roundUpToMultiple(value, multiple) {
   return Math.ceil(value / multiple) * multiple;
 }
 
+function handleSearch() {
+  const query = document.getElementById("skuSearch").value.toLowerCase();
+
+  if (!uploadedData.length) return;
+
+  const skuIndex = uploadedHeaders.indexOf("SKU");
+
+  if (skuIndex === -1) return;
+
+  const matches = uploadedData.filter(row =>
+    row[skuIndex].toLowerCase().includes(query)
+  );
+
+  displaySearchResults(matches.slice(0, 10)); // limit results
+}
+
+function selectSKU(index) {
+  const row = uploadedData[index];
+  runSingleSKU(row);
+}
+
+function runSingleSKU(row) {
+  document.getElementById("status").innerHTML = `
+    <h2>CB1 View</h2>
+    <p>Selected SKU: ${row[uploadedHeaders.indexOf("SKU")]}</p>
+  `;
+}
+
 // =========================
 // Dynamic Messaging
 // =========================
+
+function displaySearchResults(results) {
+  let html = "<div class='table-wrap'><table><tr><th>SKU</th><th>Description</th></tr>";
+
+  const skuIndex = uploadedHeaders.indexOf("SKU");
+  const descIndex = uploadedHeaders.indexOf("Description");
+
+  results.forEach((row, i) => {
+    html += `
+      <tr onclick="selectSKU(${i})" style="cursor:pointer;">
+        <td>${row[skuIndex]}</td>
+        <td>${row[descIndex] || ""}</td>
+      </tr>
+    `;
+  });
+
+  html += "</table></div>";
+
+  document.getElementById("status").innerHTML = html;
+}
 
 function getDynamicMessage(urgent, low, total) {
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
