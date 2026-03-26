@@ -61,6 +61,13 @@ function calculateTopUpOrderQty(currentStockPosition, maxStockLevel, moq, orderM
   return Math.ceil(orderQty);
 }
 
+function formatDateLabel(date) {
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short"
+  });
+}
+
 function buildProjectionData(effectiveStock, forecast, safetyStock, leadTimeDays, moq, orderMultiple) {
   const labels = ["Now"];
   const projectedStock = [Number(effectiveStock.toFixed(1))];
