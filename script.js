@@ -258,30 +258,18 @@ function getDynamicMessage(urgent, low, total) {
 
   if (urgent > 0) {
     return pick([
-      "Well… this is going to hurt.",
-      "Congratulations, you’re already late.",
-      "This won’t fix itself.",
-      "You’re about to run out. Not ideal.",
-      "Hope you like explaining stockouts."
+      "Houston..."
     ]);
   }
 
   if (low > 0) {
     return pick([
-      "You’re playing a dangerous little game here.",
-      "This is fine… until it isn’t.",
-      "You’ve got time. Not loads.",
-      "One delay and this turns ugly.",
       "Don’t leave this to chance."
     ]);
   }
 
   return pick([
-    "Look at you, being organised.",
-    "No disasters today. Enjoy it.",
-    "Everything’s under control. Suspicious.",
-    "This is what competence looks like.",
-    "Carry on. Sensibly."
+    "Nice Work!."
   ]);
 }
 
@@ -521,13 +509,13 @@ const zeroBreachLabel = zeroBreachDay >= 0 ? projectionData.labels[zeroBreachDay
 const breachText = `
   ${
     safetyBreachLabel
-      ? `Without action, stock breaches safety stock on ${safetyBreachLabel}.`
+      ? `Without action, stock breaches safety stock on ${safetyBreachLabel}`
       : `Without action, stock stays above safety stock across the ${horizonLabel} view.`
   }
   ${
     zeroBreachLabel
-      ? `Without action, stock reaches zero on ${zeroBreachLabel}.`
-      : `Without action, stock does not hit zero across the ${horizonLabel} view.`
+      ? `and reaches zero on ${zeroBreachLabel}.`
+      : `and, stock does not hit zero across the ${horizonLabel} view.`
   }
   The dashed green line shows guided replenishment using CB1’s min/max logic, topping stock back up toward the target max level after lead time.
 `;
