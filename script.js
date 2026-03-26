@@ -69,7 +69,8 @@ function formatDateLabel(date) {
 }
 
 function buildProjectionData(effectiveStock, forecast, safetyStock, leadTimeDays, moq, orderMultiple) {
-  const labels = ["Now"];
+  const startDate = new Date();
+  const labels = [formatDateLabel(startDate)];
   const projectedStock = [Number(effectiveStock.toFixed(1))];
   const guidedStock = [Number(effectiveStock.toFixed(1))];
   const safetyLine = [Number(safetyStock.toFixed(1))];
@@ -87,7 +88,9 @@ function buildProjectionData(effectiveStock, forecast, safetyStock, leadTimeDays
   let pendingDelivery = null;
 
   for (let day = 1; day <= totalDays; day++) {
-    labels.push(`D${day}`);
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + day);
+    labels.push(formatDateLabel(currentDate));
 
     // No action projection
     noActionStock -= dailyDemand;
@@ -204,19 +207,28 @@ function renderProjectionChart(canvasId, projectionData) {
           labels: {
             color: "#e2e8f0"
           }
+        },
+        tooltip: {
+          callbacks: {
+            title: function(context) {
+              return `Date: ${context[0].label}`;
+            }
+          }
         }
       },
       scales: {
-       x: {
-        ticks: {
-          color: "#e2e8f0",
-          autoSkip: true,
-          maxTicksLimit: 12
+        x: {
+          ticks: {
+            color: "#e2e8f0",
+            autoSkip: true,
+            maxTicksLimit: 10,
+            maxRotation: 0,
+            minRotation: 0
+          },
+          grid: {
+            color: "rgba(255,255,255,0.08)"
+          }
         },
-        grid: {
-          color: "rgba(255,255,255,0.08)"
-        }
-      },
         y: {
           beginAtZero: true,
           ticks: {
@@ -503,15 +515,18 @@ let safetyBreachDay = projectionData.projectedStock.findIndex((v, i) => i > 0 &&
 let zeroBreachDay = projectionData.projectedStock.findIndex((v, i) => i > 0 && v <= 0);
 const horizonLabel = `${projectionData.labels.length - 1} day${projectionData.labels.length - 1 > 1 ? "s" : ""}`;
 
+const safetyBreachLabel = safetyBreachDay >= 0 ? projectionData.labels[safetyBreachDay] : null;
+const zeroBreachLabel = zeroBreachDay >= 0 ? projectionData.labels[zeroBreachDay] : null;
+
 const breachText = `
   ${
-    safetyBreachDay >= 0
-      ? `Without action, stock breaches safety stock on day ${safetyBreachDay}.`
+    safetyBreachLabel
+      ? `Without action, stock breaches safety stock on ${safetyBreachLabel}.`
       : `Without action, stock stays above safety stock across the ${horizonLabel} view.`
   }
   ${
-    zeroBreachDay >= 0
-      ? `Without action, stock reaches zero on day ${zeroBreachDay}.`
+    zeroBreachLabel
+      ? `Without action, stock reaches zero on ${zeroBreachLabel}.`
       : `Without action, stock does not hit zero across the ${horizonLabel} view.`
   }
   The dashed green line shows guided replenishment using CB1’s min/max logic, topping stock back up toward the target max level after lead time.
