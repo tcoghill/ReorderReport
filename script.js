@@ -508,19 +508,29 @@ function renderGoldOverview() {
         </tr>
   `;
 
-  overviewRows.slice(0, 20).forEach(row => {
+  overviewRows.slice(0, 20).forEach(overviewRow => {
+    const sourceRow = uploadedData.find(row => {
+      const skuIndex = uploadedHeaders.indexOf("SKU");
+      const descIndex = uploadedHeaders.indexOf("Description");
+      const sku = skuIndex >= 0 ? row[skuIndex] : "";
+      const desc = descIndex >= 0 ? row[descIndex] : "";
+      return sku === overviewRow.sku && desc === overviewRow.description;
+    });
+
+    const safeRow = sourceRow ? encodeURIComponent(JSON.stringify(sourceRow)) : "";
+
     html += `
-      <tr>
-        <td>${row.sku}</td>
-        <td>${row.description}</td>
-        <td style="color:${row.color}; font-weight:bold;">${row.status}</td>
-        <td>${Math.ceil(row.effectiveStock)}</td>
-        <td>${Math.ceil(row.forecast)}</td>
-        <td>${row.lead}</td>
-        <td>${Math.ceil(row.reorderPoint)}</td>
-        <td>${Math.ceil(row.suggestedOrderQty)}</td>
-        <td>${row.daysToStockout}</td>
-        <td>${row.estimatedSpend !== null ? "£" + row.estimatedSpend.toFixed(2) : "N/A"}</td>
+      <tr class="result-row" ${safeRow ? `onclick="selectSKU('${safeRow}')"` : ""}>
+        <td>${overviewRow.sku}</td>
+        <td>${overviewRow.description}</td>
+        <td style="color:${overviewRow.color}; font-weight:bold;">${overviewRow.status}</td>
+        <td>${Math.ceil(overviewRow.effectiveStock)}</td>
+        <td>${Math.ceil(overviewRow.forecast)}</td>
+        <td>${overviewRow.lead}</td>
+        <td>${Math.ceil(overviewRow.reorderPoint)}</td>
+        <td>${Math.ceil(overviewRow.suggestedOrderQty)}</td>
+        <td>${overviewRow.daysToStockout}</td>
+        <td>${overviewRow.estimatedSpend !== null ? "£" + overviewRow.estimatedSpend.toFixed(2) : "N/A"}</td>
       </tr>
     `;
   });
@@ -528,7 +538,7 @@ function renderGoldOverview() {
   html += `
       </table>
     </div>
-    <p class="muted">Showing top 20 SKUs by urgency. Existing search and CB1 drilldown remain unchanged.</p>
+    <p class="muted">Showing top 20 SKUs by urgency. Click any row to load the CB1 drilldown.</p>
   `;
 
   document.getElementById("goldOverviewPanel").innerHTML = html;
