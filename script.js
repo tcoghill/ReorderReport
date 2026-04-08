@@ -92,22 +92,18 @@ function buildProjectionData(effectiveStock, forecast, safetyStock, leadTimeDays
     currentDate.setDate(startDate.getDate() + day);
     labels.push(formatDateLabel(currentDate));
 
-    // No action projection
     noActionStock -= dailyDemand;
     projectedStock.push(Number(Math.max(0, noActionStock).toFixed(1)));
 
-    // Receive pending delivery if due
     if (pendingDelivery && pendingDelivery.day === day) {
       guidedCurrentStock += pendingDelivery.qty;
       pendingDelivery = null;
     }
 
-    // Consume daily demand
     guidedCurrentStock -= dailyDemand;
 
     let markerValue = null;
 
-    // Trigger replenishment when stock breaches reorder point
     if (guidedCurrentStock <= reorderPoint && !pendingDelivery) {
       const orderQty = calculateTopUpOrderQty(
         guidedCurrentStock,
@@ -280,10 +276,21 @@ function getDynamicMessage(urgent, low, total) {
 function resetTool() {
   uploadedData = [];
   uploadedHeaders = [];
-  document.getElementById("fileInput").value = "";
-  document.getElementById("uploadStatus").innerHTML = "";
-  document.getElementById("goldOverviewPanel").innerHTML = "Upload a file to generate the overview.";
-  document.getElementById("cb1Panel").innerHTML = "Select a SKU to load the CB1 view.";
+
+  if (cb1Chart) {
+    cb1Chart.destroy();
+    cb1Chart = null;
+  }
+
+  const fileInput = document.getElementById("fileInput");
+  const uploadStatus = document.getElementById("uploadStatus");
+  const goldOverviewPanel = document.getElementById("goldOverviewPanel");
+  const cb1Panel = document.getElementById("cb1Panel");
+
+  if (fileInput) fileInput.value = "";
+  if (uploadStatus) uploadStatus.innerHTML = "";
+  if (goldOverviewPanel) goldOverviewPanel.innerHTML = "Upload a file to generate the overview.";
+  if (cb1Panel) cb1Panel.innerHTML = "Select a SKU to load the CB1 view.";
 }
 
 function handleUpload() {
@@ -329,7 +336,7 @@ function handleUpload() {
     uploadedData = data.filter(row => row.length > 0 && row.some(cell => cell !== ""));
 
     document.getElementById("uploadStatus").innerHTML =
-      `File loaded: ${uploadedData.length} SKU rows ready. Search to begin.`;
+      `File loaded: ${uploadedData.length} SKU rows ready. Gold Overview generated.`;
 
     renderGoldOverview();
     document.getElementById("cb1Panel").innerHTML = "Select a SKU from the Gold Overview table to load the CB1 view.";
@@ -337,6 +344,10 @@ function handleUpload() {
 
   reader.readAsText(file);
 }
+
+// =========================
+// Gold Overview
+// =========================
 
 function calculateOverviewMetrics(row) {
   const get = (name) => {
@@ -643,6 +654,30 @@ function renderGoldOverviewFiltered(filteredRows) {
   document.getElementById("goldOverviewPanel").innerHTML = html;
 }
 
+function handleSearch() {
+  if (!uploadedData.length) return;
+
+  const searchInput = document.getElementById("skuSearch");
+  const query = searchInput ? searchInput.value.toLowerCase() : "";
+
+  if (!query) {
+    renderGoldOverview();
+    return;
+  }
+
+  const filteredData = uploadedData.filter(row => {
+    const skuIndex = uploadedHeaders.indexOf("SKU");
+    const descIndex = uploadedHeaders.indexOf("Description");
+
+    const sku = skuIndex >= 0 ? (row[skuIndex] || "").toLowerCase() : "";
+    const desc = descIndex >= 0 ? (row[descIndex] || "").toLowerCase() : "";
+
+    return sku.includes(query) || desc.includes(query);
+  });
+
+  renderGoldOverviewFiltered(filteredData);
+}
+
 function selectSKU(encodedRow) {
   const row = JSON.parse(decodeURIComponent(encodedRow));
   runSingleSKU(row);
@@ -701,7 +736,7 @@ function runSingleSKU(row) {
   const effectiveStock = stock + onOrderQty;
   const reorderPoint = (daily * lead) + recommendedSafetyStock;
   const maxStockLevel = reorderPoint + forecast;
-  
+
   let reorderQty = calculateTopUpOrderQty(
     effectiveStock,
     maxStockLevel,
@@ -745,95 +780,95 @@ function runSingleSKU(row) {
     `Forecast based on ${forecastMethod}.`;
 
   const projectionData = buildProjectionData(
-  effectiveStock,
-  forecast,
-  recommendedSafetyStock,
-  lead,
-  moq,
-  orderMultiple
-);
+    effectiveStock,
+    forecast,
+    recommendedSafetyStock,
+    lead,
+    moq,
+    orderMultiple
+  );
 
-let safetyBreachDay = projectionData.projectedStock.findIndex((v, i) => i > 0 && v < recommendedSafetyStock);
-let zeroBreachDay = projectionData.projectedStock.findIndex((v, i) => i > 0 && v <= 0);
-const horizonLabel = `${projectionData.labels.length - 1} day${projectionData.labels.length - 1 > 1 ? "s" : ""}`;
+  let safetyBreachDay = projectionData.projectedStock.findIndex((v, i) => i > 0 && v < recommendedSafetyStock);
+  let zeroBreachDay = projectionData.projectedStock.findIndex((v, i) => i > 0 && v <= 0);
+  const horizonLabel = `${projectionData.labels.length - 1} day${projectionData.labels.length - 1 > 1 ? "s" : ""}`;
 
-const safetyBreachLabel = safetyBreachDay >= 0 ? projectionData.labels[safetyBreachDay] : null;
-const zeroBreachLabel = zeroBreachDay >= 0 ? projectionData.labels[zeroBreachDay] : null;
+  const safetyBreachLabel = safetyBreachDay >= 0 ? projectionData.labels[safetyBreachDay] : null;
+  const zeroBreachLabel = zeroBreachDay >= 0 ? projectionData.labels[zeroBreachDay] : null;
 
-const breachText = `
-  ${
-    safetyBreachLabel
-      ? `Without action, stock breaches safety stock on ${safetyBreachLabel}`
-      : `Without action, stock stays above safety stock across the ${horizonLabel} view.`
-  }
-  ${
-    zeroBreachLabel
-      ? `and reaches zero on ${zeroBreachLabel}.`
-      : `and, stock does not hit zero across the ${horizonLabel} view.`
-  }
-  The dashed green line shows guided replenishment using CB1’s min/max logic, topping stock back up toward the target max level after lead time.
-`;
+  const breachText = `
+    ${
+      safetyBreachLabel
+        ? `Without action, stock breaches safety stock on ${safetyBreachLabel}`
+        : `Without action, stock stays above safety stock across the ${horizonLabel} view.`
+    }
+    ${
+      zeroBreachLabel
+        ? `and reaches zero on ${zeroBreachLabel}.`
+        : `and, stock does not hit zero across the ${horizonLabel} view.`
+    }
+    The dashed green line shows guided replenishment using CB1’s min/max logic, topping stock back up toward the target max level after lead time.
+  `;
 
-const html = `
-  <h3>${sku} - ${description}</h3>
+  const html = `
+    <h3>${sku} - ${description}</h3>
 
-  <div class="summary-strip">
-    <div class="summary-card">
-      <h4>Status</h4>
-      <p style="color:${color};">${status}</p>
+    <div class="summary-strip">
+      <div class="summary-card">
+        <h4>Status</h4>
+        <p style="color:${color};">${status}</p>
+      </div>
+      <div class="summary-card">
+        <h4>Forecast</h4>
+        <p>${forecast.toFixed(0)}</p>
+      </div>
+      <div class="summary-card">
+        <h4>Days to Stockout</h4>
+        <p>${daysToStockout}</p>
+      </div>
+      <div class="summary-card">
+        <h4>Suggested Order Qty</h4>
+        <p>${Math.ceil(reorderQty)}</p>
+      </div>
+      <div class="summary-card">
+        <h4>Estimated Spend</h4>
+        <p>${spend}</p>
+      </div>
+      <div class="summary-card">
+        <h4>Safety Stock</h4>
+        <p>${Math.ceil(recommendedSafetyStock)}</p>
+      </div>
     </div>
-    <div class="summary-card">
-      <h4>Forecast</h4>
-      <p>${forecast.toFixed(0)}</p>
-    </div>
-    <div class="summary-card">
-      <h4>Days to Stockout</h4>
-      <p>${daysToStockout}</p>
-    </div>
-    <div class="summary-card">
-      <h4>Suggested Order Qty</h4>
-      <p>${Math.ceil(reorderQty)}</p>
-    </div>
-    <div class="summary-card">
-      <h4>Estimated Spend</h4>
-      <p>${spend}</p>
-    </div>
-    <div class="summary-card">
-      <h4>Safety Stock</h4>
-      <p>${Math.ceil(recommendedSafetyStock)}</p>
-    </div>
-  </div>
 
-  <div class="signal-box" style="color:${color}; border:1px solid ${color};">
-    ${message}
-  </div>
-
-  <div class="panel" style="margin-top:15px;">
-    <h3 style="margin-top:0;">Projection</h3>
-    <div style="height:320px;">
-      <canvas id="projectionChart"></canvas>
+    <div class="signal-box" style="color:${color}; border:1px solid ${color};">
+      ${message}
     </div>
-    <p class="muted">${breachText}</p>
-  </div>
 
-  <div class="table-wrap">
-    <table>
-      <tr><th>Metric</th><th>Value</th></tr>
-      <tr><td>Current Stock</td><td>${stock}</td></tr>
-      <tr><td>On Order Qty</td><td>${onOrderQty}</td></tr>
-      <tr><td>Effective Stock</td><td>${effectiveStock}</td></tr>
-      <tr><td>Lead Time Days</td><td>${lead}</td></tr>
-      <tr><td>Forecast</td><td>${forecast.toFixed(0)} per month</td></tr>
-      <tr><td>Forecast Method</td><td>${forecastMethod}</td></tr>
-      <tr><td>Reorder Point</td><td>${Math.ceil(reorderPoint)}</td></tr>
-      <tr><td>Max Stock Level</td><td>${Math.ceil(maxStockLevel)}</td></tr>
-      <tr><td>MOQ</td><td>${moq || "-"}</td></tr>
-      <tr><td>Order Multiple</td><td>${orderMultiple || "-"}</td></tr>
-      <tr><td class="reason">Reason</td><td class="reason">${reason}</td></tr>
-    </table>
-  </div>
-`;
+    <div class="panel" style="margin-top:15px;">
+      <h3 style="margin-top:0;">Projection</h3>
+      <div style="height:320px;">
+        <canvas id="projectionChart"></canvas>
+      </div>
+      <p class="muted">${breachText}</p>
+    </div>
 
-document.getElementById("cb1Panel").innerHTML = html;
-renderProjectionChart("projectionChart", projectionData);
+    <div class="table-wrap">
+      <table>
+        <tr><th>Metric</th><th>Value</th></tr>
+        <tr><td>Current Stock</td><td>${stock}</td></tr>
+        <tr><td>On Order Qty</td><td>${onOrderQty}</td></tr>
+        <tr><td>Effective Stock</td><td>${effectiveStock}</td></tr>
+        <tr><td>Lead Time Days</td><td>${lead}</td></tr>
+        <tr><td>Forecast</td><td>${forecast.toFixed(0)} per month</td></tr>
+        <tr><td>Forecast Method</td><td>${forecastMethod}</td></tr>
+        <tr><td>Reorder Point</td><td>${Math.ceil(reorderPoint)}</td></tr>
+        <tr><td>Max Stock Level</td><td>${Math.ceil(maxStockLevel)}</td></tr>
+        <tr><td>MOQ</td><td>${moq || "-"}</td></tr>
+        <tr><td>Order Multiple</td><td>${orderMultiple || "-"}</td></tr>
+        <tr><td class="reason">Reason</td><td class="reason">${reason}</td></tr>
+      </table>
+    </div>
+  `;
+
+  document.getElementById("cb1Panel").innerHTML = html;
+  renderProjectionChart("projectionChart", projectionData);
 }
