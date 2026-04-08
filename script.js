@@ -544,6 +544,75 @@ function renderGoldOverview() {
   document.getElementById("goldOverviewPanel").innerHTML = html;
 }
 
+function renderGoldOverviewFiltered(filteredRows) {
+  const overviewRows = filteredRows
+    .map(calculateOverviewMetrics)
+    .filter(row => row !== null)
+    .sort((a, b) => {
+      const priority = { URGENT: 0, LOW: 1, OK: 2 };
+      const statusDiff = priority[a.status] - priority[b.status];
+      if (statusDiff !== 0) return statusDiff;
+      return a.daysToStockout - b.daysToStockout;
+    });
+
+  if (!overviewRows.length) {
+    document.getElementById("goldOverviewPanel").innerHTML =
+      "<p class='muted'>No matching SKUs found.</p>";
+    return;
+  }
+
+  let html = `
+    <div class="table-wrap">
+      <table>
+        <tr>
+          <th>SKU</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Effective Stock</th>
+          <th>Forecast</th>
+          <th>Lead Time</th>
+          <th>Reorder Point</th>
+          <th>Suggested Order Qty</th>
+          <th>Days to Stockout</th>
+          <th>Est. Spend</th>
+        </tr>
+  `;
+
+  overviewRows.forEach(overviewRow => {
+    const sourceRow = uploadedData.find(row => {
+      const skuIndex = uploadedHeaders.indexOf("SKU");
+      const descIndex = uploadedHeaders.indexOf("Description");
+      const sku = skuIndex >= 0 ? row[skuIndex] : "";
+      const desc = descIndex >= 0 ? row[descIndex] : "";
+      return sku === overviewRow.sku && desc === overviewRow.description;
+    });
+
+    const safeRow = sourceRow ? encodeURIComponent(JSON.stringify(sourceRow)) : "";
+
+    html += `
+      <tr class="result-row" ${safeRow ? `onclick="selectSKU('${safeRow}')"` : ""}>
+        <td>${overviewRow.sku}</td>
+        <td>${overviewRow.description}</td>
+        <td style="color:${overviewRow.color}; font-weight:bold;">${overviewRow.status}</td>
+        <td>${Math.ceil(overviewRow.effectiveStock)}</td>
+        <td>${Math.ceil(overviewRow.forecast)}</td>
+        <td>${overviewRow.lead}</td>
+        <td>${Math.ceil(overviewRow.reorderPoint)}</td>
+        <td>${Math.ceil(overviewRow.suggestedOrderQty)}</td>
+        <td>${overviewRow.daysToStockout}</td>
+        <td>${overviewRow.estimatedSpend !== null ? "£" + overviewRow.estimatedSpend.toFixed(2) : "N/A"}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </table>
+    </div>
+  `;
+
+  document.getElementById("goldOverviewPanel").innerHTML = html;
+}
+
 // =========================
 // Search / Results
 // =========================
@@ -552,16 +621,23 @@ function handleSearch() {
   if (!uploadedData.length) return;
 
   const query = document.getElementById("skuSearch").value.toLowerCase();
-  const skuIndex = uploadedHeaders.indexOf("SKU");
-  const descIndex = uploadedHeaders.indexOf("Description");
 
-  const matches = uploadedData.filter(row => {
-    const sku = (row[skuIndex] || "").toLowerCase();
-    const desc = (row[descIndex] || "").toLowerCase();
+  if (!query) {
+    renderGoldOverview();
+    return;
+  }
+
+  const filteredData = uploadedData.filter(row => {
+    const skuIndex = uploadedHeaders.indexOf("SKU");
+    const descIndex = uploadedHeaders.indexOf("Description");
+
+    const sku = skuIndex >= 0 ? (row[skuIndex] || "").toLowerCase() : "";
+    const desc = descIndex >= 0 ? (row[descIndex] || "").toLowerCase() : "";
+
     return sku.includes(query) || desc.includes(query);
   });
 
-  renderResultsTable(matches.slice(0, 25));
+  renderGoldOverviewFiltered(filteredData);
 }
 
 function renderResultsTable(rows) {
