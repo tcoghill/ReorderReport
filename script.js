@@ -527,12 +527,9 @@ function renderFileSummary() {
 }
 
 function renderGoldOverview() {
-  const existingSearch = document.getElementById("skuSearch")
-    ? document.getElementById("skuSearch").value
-    : "";
-
   if (!uploadedData.length) {
-    document.getElementById("goldOverviewPanel").innerHTML = "Upload a file to generate the overview.";
+    document.getElementById("goldOverviewPanel").innerHTML =
+      "Upload a file to generate the overview.";
     return;
   }
 
@@ -557,7 +554,6 @@ function renderGoldOverview() {
         type="text"
         id="skuSearch"
         placeholder="Filter by SKU or description..."
-        value="${existingSearch}"
         oninput="handleSearch()"
         style="margin-top:0;"
       >
@@ -586,15 +582,23 @@ function renderGoldOverview() {
         <p>£${totalSpend.toFixed(2)}</p>
       </div>
     </div>
+
+    <div id="overviewTableContainer"></div>
   `;
 
+  document.getElementById("goldOverviewPanel").innerHTML = html;
+  
+  renderOverviewTable(overviewRows);
+}
+
+function renderOverviewTable(overviewRows) {
   if (!overviewRows.length) {
-    html += `<p class="muted">No valid SKU rows found for overview.</p>`;
-    document.getElementById("goldOverviewPanel").innerHTML = html;
+    document.getElementById("overviewTableContainer").innerHTML =
+      "<p class='muted'>No matching SKUs found.</p>";
     return;
   }
 
-  html += `
+  let html = `
     <div class="table-wrap">
       <table>
         <tr>
@@ -615,9 +619,8 @@ function renderGoldOverview() {
     const sourceRow = uploadedData.find(row => {
       const skuIndex = uploadedHeaders.indexOf("SKU");
       const descIndex = uploadedHeaders.indexOf("Description");
-      const sku = skuIndex >= 0 ? row[skuIndex] : "";
-      const desc = descIndex >= 0 ? row[descIndex] : "";
-      return sku === overviewRow.sku && desc === overviewRow.description;
+      return row[skuIndex] === overviewRow.sku &&
+             row[descIndex] === overviewRow.description;
     });
 
     const safeRow = sourceRow ? encodeURIComponent(JSON.stringify(sourceRow)) : "";
@@ -638,13 +641,9 @@ function renderGoldOverview() {
     `;
   });
 
-  html += `
-      </table>
-    </div>
-    <p class="muted">Showing all valid SKUs, sorted by urgency and earliest stockout first. Click any row to load the CB1 drilldown.</p>
-  `;
+  html += `</table></div>`;
 
-  document.getElementById("goldOverviewPanel").innerHTML = html;
+  document.getElementById("overviewTableContainer").innerHTML = html;
 }
 
 function renderGoldOverviewFiltered(filteredRows) {
