@@ -284,9 +284,8 @@ function resetTool() {
   document.getElementById("skuSearch").value = "";
   document.getElementById("skuSearch").disabled = true;
   document.getElementById("uploadStatus").innerHTML = "";
-  document.getElementById("resultsPanel").innerHTML = "Upload a file to begin.";
   document.getElementById("goldOverviewPanel").innerHTML = "Upload a file to generate the overview.";
-  document.getElementById("cb1Panel").innerHTML = "Select an SKU to load the CB1 view.";
+  document.getElementById("cb1Panel").innerHTML = "Select a SKU to load the CB1 view.";
 }
 
 function handleUpload() {
@@ -335,9 +334,8 @@ function handleUpload() {
     document.getElementById("uploadStatus").innerHTML =
       `File loaded: ${uploadedData.length} SKU rows ready. Search to begin.`;
 
-    renderResultsTable(uploadedData.slice(0, 25));
     renderGoldOverview();
-    document.getElementById("cb1Panel").innerHTML = "Select an SKU from the left to load the CB1 view.";
+    document.getElementById("cb1Panel").innerHTML = "Select a SKU from the Gold Overview table to load the CB1 view.";
   };
 
   reader.readAsText(file);
