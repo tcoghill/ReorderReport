@@ -10,18 +10,27 @@
 <body>
   <div class="box">
     <h1>CB1 Online</h1>
-    <p>Upload stock and usage data. Then search for an SKU to load the Crystal Ball view.</p>
+    <p>Upload stock and usage data. Then review the Gold Overview and click an SKU to load the Crystal Ball view.</p>
 
     <div class="top-row">
       <div class="panel compact-panel">
         <h2>Stage 1: Upload File</h2>
-        <button type="button" onclick="triggerFileUpload()">Upload File</button>
+
+        <input
+          type="file"
+          id="fileInput"
+          accept=".csv"
+          style="display:none;"
+          onchange="handleUpload()"
+        >
+
         <div class="button-stack compact-stack">
+          <button type="button" onclick="triggerFileUpload()">Upload File</button>
           <button type="button" class="secondary-btn" onclick="downloadSimpleTemplate()">Simple Template</button>
           <button type="button" class="secondary-btn" onclick="downloadAdvancedTemplate()">Advanced Template</button>
-          <button type="button" onclick="handleUpload()">Upload File</button>
           <button type="button" class="danger-btn" onclick="resetTool()">Reset</button>
         </div>
+
         <div id="uploadStatus" class="muted"></div>
       </div>
 
@@ -31,7 +40,7 @@
       </div>
     </div>
 
-        <div class="panel cb1-panel">
+    <div class="panel cb1-panel">
       <h2>Gold Overview</h2>
       <div id="goldOverviewPanel" class="muted">Upload a file to generate the overview.</div>
     </div>
