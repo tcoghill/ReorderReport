@@ -71,6 +71,14 @@ button {
   display: grid;
   gap: 10px;
   margin-top: 10px;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.button-stack button,
+.action-row button {
+  width: 100%;
 }
 
 .compact-stack button {
